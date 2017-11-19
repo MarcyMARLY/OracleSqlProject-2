@@ -3,7 +3,6 @@ START WITH 1
 INCREMENT BY 1
 NOMAXVALUE;
 
-
 CREATE SEQUENCE CARD_R_SEQ
 START WITH 1
 INCREMENT BY 1
@@ -25,7 +24,6 @@ INCREMENT BY 1
 NOMAXVALUE;
 
 drop table A3_CREDIT_CARDS;
-
 drop table A1_CLIENTS;
 drop table A2_OFFICERS;
 
@@ -37,7 +35,6 @@ CREATE TABLE A1_CLIENTS(
 	cl_name VARCHAR2(50) NOT NULL,
 	cl_surname VARCHAR2(50) NOT NULL,
 	cl_auth_status INT,
-	cl_is_block INT,
 	cl_address VARCHAR2(50),
 	cl_amend_date DATE,
 	cl_officcer VARCHAR2(50),
@@ -45,20 +42,11 @@ CREATE TABLE A1_CLIENTS(
     cl_auth_date DATE ,
     cl_email VARCHAR2(50),
     cl_salary NUMBER(20,2),
-    cl_credit_score NUMBER,					
-    cl_his_status INT,
     CONSTRAINT pk_cl_id PRIMARY KEY (cl_main_id),
     CONSTRAINT fk_of FOREIGN KEY (cl_officcer) REFERENCES A2_OFFICERS(of_id)
 );
 
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.add_client('Nona','Mu','Paris','1','2','Nona.Mu',12000,45,1);
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.auth_client('101');
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.update_client('101','Nona','MuE',0,'Paris','Nona.MuE',12000,45,1);
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.add_card('101','USD',1.5,101);
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.auth_add_card('101');
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.put_money_on_card('1',200);
-EXECUTE CREDIT_CARD_MANAGEMENT_SYSTEM.take_money_from_card('1',100);
-execute DBMS_OUTPUT.PUT_LINE(print_client_balance('1'));
+
 CREATE TABLE A2_OFFICERS(
 	of_id VARCHAR2(50) NOT NULL,
 	of_f_name VARCHAR2(50),
@@ -66,10 +54,6 @@ CREATE TABLE A2_OFFICERS(
 	of_hire_date DATE,
 	CONSTRAINT pk_of_id PRIMARY KEY (of_id)
 );
-INSERT INTO A2_OFFICERS VALUES('1','Officer1','Officer1',SYSDATE);
-INSERT INTO A2_OFFICERS VALUES('2','Officer2','Officer2',SYSDATE);
-INSERT INTO A2_OFFICERS VALUES('3','Officer3','Officer3',SYSDATE);
-
 
 CREATE TABLE A3_CREDIT_CARDS(
 	c_record_id VARCHAR2(50) NOT NULL,
@@ -102,9 +86,8 @@ CREATE OR REPLACE PACKAGE CREDIT_CARD_MANAGEMENT_SYSTEM IS
 									cl_officcer IN A1_CLIENTS.cl_officcer%TYPE,
 									cl_auth_officcer IN A1_CLIENTS.cl_auth_officcer%TYPE,
 									cl_email IN A1_CLIENTS.cl_email%TYPE,
-									cl_salary IN A1_CLIENTS.cl_salary%TYPE,
-									cl_credit_score IN A1_CLIENTS.cl_credit_score%TYPE,
-									cl_his_status IN A1_CLIENTS.cl_his_status%TYPE);
+									cl_salary IN A1_CLIENTS.cl_salary%TYPE
+									);
 
 	PROCEDURE auth_client(cl_main_id IN A1_CLIENTS.cl_main_id%TYPE);
 	PROCEDURE delete_client(cl_main_id IN A1_CLIENTS.cl_main_id%TYPE);
@@ -113,16 +96,12 @@ CREATE OR REPLACE PACKAGE CREDIT_CARD_MANAGEMENT_SYSTEM IS
 	PROCEDURE update_client(cl_main_id IN A1_CLIENTS.cl_main_id%TYPE,
 										cl_name IN A1_CLIENTS.cl_name%TYPE,
 										cl_surname IN A1_CLIENTS.cl_surname%TYPE,
-										cl_is_block IN A1_CLIENTS.cl_is_block%TYPE,
 										cl_address IN A1_CLIENTS.cl_address%TYPE,
 										cl_email IN A1_CLIENTS.cl_email%TYPE,
-										cl_salary IN A1_CLIENTS.cl_salary%TYPE,
-										cl_credit_score IN A1_CLIENTS.cl_credit_score%TYPE,
-										cl_his_status IN A1_CLIENTS.cl_his_status%TYPE);
+										cl_salary IN A1_CLIENTS.cl_salary%TYPE);
 	PROCEDURE add_card(c_owner_id IN A3_CREDIT_CARDS.c_owner_id%TYPE,
 										c_curr_type  IN A3_CREDIT_CARDS.c_curr_type%TYPE,
-										c_interest IN A3_CREDIT_CARDS.c_interest%TYPE,
-										c_credit_limit IN A3_CREDIT_CARDS.c_credit_limit%TYPE);
+										c_interest IN A3_CREDIT_CARDS.c_interest%TYPE);
 
 	PROCEDURE auth_add_card(c_main_id IN A3_CREDIT_CARDS.c_main_id%TYPE);
 	PROCEDURE delete_card(c_main_id IN A3_CREDIT_CARDS.c_main_id%TYPE);
@@ -151,16 +130,14 @@ CREATE OR REPLACE PACKAGE BODY CREDIT_CARD_MANAGEMENT_SYSTEM IS
 										cl_officcer IN A1_CLIENTS.cl_officcer%TYPE,
 										cl_auth_officcer IN A1_CLIENTS.cl_auth_officcer%TYPE,
 										cl_email IN A1_CLIENTS.cl_email%TYPE,
-										cl_salary IN A1_CLIENTS.cl_salary%TYPE,
-										cl_credit_score IN A1_CLIENTS.cl_credit_score%TYPE,
-										cl_his_status IN A1_CLIENTS.cl_his_status%TYPE
+										cl_salary IN A1_CLIENTS.cl_salary%TYPE
 										)
 		AS
 		val NUMBER;
 		BEGIN
 			val := M_SEQ.nextval;
-			INSERT INTO A1_CLIENTS VALUES(R_SEQ.nextval, val, val, add_client.cl_name,add_client.cl_surname,0,0, add_client.cl_address,SYSDATE,add_client.cl_officcer,
-				add_client.cl_auth_officcer,'01.01.00',add_client.cl_email,add_client.cl_salary,add_client.cl_credit_score,add_client.cl_his_status);
+			INSERT INTO A1_CLIENTS VALUES(R_SEQ.nextval, val, val, add_client.cl_name,add_client.cl_surname,0, add_client.cl_address,SYSDATE,add_client.cl_officcer,
+				add_client.cl_auth_officcer,'01.01.00',add_client.cl_email,add_client.cl_salary);
 			COMMIT;
 	END add_client;
 
@@ -192,12 +169,9 @@ CREATE OR REPLACE PACKAGE BODY CREDIT_CARD_MANAGEMENT_SYSTEM IS
 	PROCEDURE update_client(cl_main_id IN A1_CLIENTS.cl_main_id%TYPE,
 										cl_name IN A1_CLIENTS.cl_name%TYPE,
 										cl_surname IN A1_CLIENTS.cl_surname%TYPE,
-										cl_is_block IN A1_CLIENTS.cl_is_block%TYPE,
 										cl_address IN A1_CLIENTS.cl_address%TYPE,
 										cl_email IN A1_CLIENTS.cl_email%TYPE,
-										cl_salary IN A1_CLIENTS.cl_salary%TYPE,
-										cl_credit_score IN A1_CLIENTS.cl_credit_score%TYPE,
-										cl_his_status IN A1_CLIENTS.cl_his_status%TYPE)
+										cl_salary IN A1_CLIENTS.cl_salary%TYPE)
 	IS
 		v_cl_record A1_CLIENTS%ROWTYPE;
 	BEGIN
@@ -206,23 +180,34 @@ CREATE OR REPLACE PACKAGE BODY CREDIT_CARD_MANAGEMENT_SYSTEM IS
 		WHERE A1_CLIENTS.cl_auth_status = 1 AND A1_CLIENTS.cl_main_id = update_client.cl_main_id;
 
 		INSERT INTO A1_CLIENTS VALUES(R_SEQ.nextval,update_client.cl_main_id,update_client.cl_main_id,update_client.cl_name,update_client.cl_surname,
-			1,update_client.cl_is_block,update_client.cl_address,v_cl_record.cl_amend_date, v_cl_record.cl_officcer,v_cl_record.cl_auth_officcer,
-			v_cl_record.cl_auth_date,update_client.cl_email,update_client.cl_salary,update_client.cl_credit_score,update_client.cl_his_status);
+			1,update_client.cl_address,v_cl_record.cl_amend_date, v_cl_record.cl_officcer,v_cl_record.cl_auth_officcer,
+			v_cl_record.cl_auth_date,update_client.cl_email,update_client.cl_salary);
 		COMMIT;
 	END update_client;
 
 	PROCEDURE add_card(c_owner_id IN A3_CREDIT_CARDS.c_owner_id%TYPE,
 										c_curr_type  IN A3_CREDIT_CARDS.c_curr_type%TYPE,
-										c_interest IN A3_CREDIT_CARDS.c_interest%TYPE,
-										c_credit_limit IN A3_CREDIT_CARDS.c_credit_limit%TYPE
+										c_interest IN A3_CREDIT_CARDS.c_interest%TYPE
 										)
 	IS
 	val NUMBER;
 	BEGIN
+		IF check_credit_score(c_owner_id) THEN
 		val:=CARD_M_SEQ.nextval;
-		INSERT INTO A3_CREDIT_CARDS VALUES (CARD_R_SEQ.nextval,val,val,add_card.c_owner_id,add_card.c_curr_type,0,
-			add_card.c_interest,0,SYSDATE,SYSDATE,add_card.c_credit_limit);
+		IF calc_credit_score(c_owner_id) > 3 THEN
+			INSERT INTO A3_CREDIT_CARDS VALUES (CARD_R_SEQ.nextval,val,val,add_card.c_owner_id,add_card.c_curr_type,0,
+				add_card.c_interest,0,SYSDATE,SYSDATE,500);
+			ELSE IF calc_credit_score(c_owner_id) = 3 THEN
+			INSERT INTO A3_CREDIT_CARDS VALUES (CARD_R_SEQ.nextval,val,val,add_card.c_owner_id,add_card.c_curr_type,0,
+				add_card.c_interest,0,SYSDATE,SYSDATE,300);
+			ELSE 
+				INSERT INTO A3_CREDIT_CARDS VALUES (CARD_R_SEQ.nextval,val,val,add_card.c_owner_id,add_card.c_curr_type,0,
+				add_card.c_interest,0,SYSDATE,SYSDATE,100);
+				END IF;
+		END IF;
+		END IF;
 		COMMIT;
+
 	END add_card;
 
 	PROCEDURE auth_add_card(c_main_id IN A3_CREDIT_CARDS.c_main_id%TYPE)
